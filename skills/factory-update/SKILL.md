@@ -11,6 +11,21 @@ One first-run setup before that can happen: open **Settings → Actions → Gene
 
 And a run that goes green without opening a PR isn't broken — it means your office already matches the template. Nothing to propose is the good outcome, most months.
 
+## How the "up to date?" check works
+
+When the human asks whether the factory is current, **read both of the template's version signals and take the newer one**:
+
+- Read this office's own version from the one-line file [`.github/template-version.txt`](../../.github/template-version.txt).
+- Read the template's **latest release**: `GET /repos/squidbay/factory/releases/latest` — its tag is a version, and its notes are that update's `FROM-HQ.md` entry.
+- Read the template's **raw one-line file**: `https://raw.githubusercontent.com/squidbay/factory/main/.github/template-version.txt`.
+- **The newer of those two is the template's current version.** If it's newer than this office's, an update is waiting; if they match, say "up to date" and stop. If only one signal is reachable, use it. If neither is, say so plainly — never report "up to date" from a read that failed.
+
+**Why both, and not release-first.** The two signals are written by two different human acts — the version file is bumped in the pull request that lands the work, the Release is cut afterwards by hand — so they drift, routinely and invisibly, in the window between a merge and a release cut. The old check read the Release first and only consulted the raw file when *no* release could be read at all, which broke in both directions: an office sitting on the Release tag was told **"up to date" while days of merged template work sat unshipped**, and an office that was genuinely current was told an update was waiting on **every single run**. Observed live on 2026-07-27 — Release `2026-07-23.4`, version file `2026-07-26`. Taking the newer of the two lets neither source hide the other, and asks no new discipline of the human cutting releases.
+
+Compare with a **version sort**, not a plain string sort: plain ordering puts `2026-07-23.10` *before* `2026-07-23.2`, which would quietly stop proposing updates after the ninth point release of a single day.
+
+The version file is the machine anchor; [`VERSIONS.md`](../../VERSIONS.md) is the human-facing page but deliberately no longer prints the number — the check only ever parses the one-line file and the Release, so prose can neither lag nor break it.
+
 ## What the update can and cannot touch
 
 The boundary is a file you own: [`.github/template-manifest.txt`](../../.github/template-manifest.txt). Paths listed there (the rulebook, the guides, the seats' boot files, the shipped skills and missions) are template-managed and may appear in an update PR. Everything else is **never touched**: your journal, your specs, your roster in `FACTORY.md`, mission packs you added, your denylist. If you edited a managed file and want to keep your version, remove its line from the manifest — from then on it's yours.
@@ -20,13 +35,13 @@ Two things the update deliberately reports **without applying** (look for "Also 
 - **Workflow changes.** A repo's automation cannot rewrite its own automation — when the template's workflows improve, the PR tells you, and bringing them over is a normal Code-seat task.
 - **Manifest drift.** If your manifest differs from the template's, the PR says so and leaves yours alone.
 
-One more honest mechanic: because the workflow opens its PRs with the default Actions token, **your other workflows — the guardrails check included — do not run on update PRs.** That's a GitHub rule, not a malfunction. The content arrives from the public template, which runs its own gates before anything lands there; if you want your own checks on an update anyway, ask a Code seat to re-open the same delta as a normal PR.
+One more honest mechanic: because the workflow opens its PRs with the default Actions token, **your other workflows — the guardrails check included — do not run on update PRs.** That's a GitHub rule, not a malfunction. The content arrives from the public template, which runs its own gates before anything lands there; if you want your own checks on an update anyway, ask your Engineer seat to re-open the same delta as a normal PR.
 
 ## How to handle an update PR
 
 1. **Read the diff like any PR** — it's usually copy improvements, new guide sections, sharpened seat rules. Ask any seat to explain a hunk in plain words; that's what they're for.
 2. **Merge** when satisfied. **Close** to skip a round — while a difference remains, the next run re-proposes it, so skipping is never permanent unless you edit the manifest.
-3. **Want part of it?** Ask a Code seat: "take the open factory-update PR, keep only the changes to X and Y, and re-open it." Selective adoption is a normal request, not a special mode.
+3. **Want part of it?** Ask your Engineer seat: "take the open factory-update PR, keep only the changes to X and Y, and re-open it." Selective adoption is a normal request, not a special mode.
 
 ## For the seat running this
 
